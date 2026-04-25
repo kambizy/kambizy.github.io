@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Charlie Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Homemade+Apple&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #141210;
+    --ink-soft: #2b2620;
+    --paper: #f1e8d4;
+    --paper-deep: #e4d7b8;
+    --paper-edge: #b8a37a;
+    --paper-shadow: rgba(60, 40, 20, 0.35);
+    --board: #3a2f24;
+    --board-2: #2a2118;
+    --card-radius: 8px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    font-family: 'EB Garamond', Georgia, serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse at 20% 10%, #4a3d2e 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 90%, #2e251b 0%, transparent 55%),
+      repeating-linear-gradient(45deg, #3a2f24 0 2px, #342a20 2px 4px),
+      #2e251b;
+    background-attachment: fixed;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(255,255,255,0.03) 0 2px, transparent 3px),
+      radial-gradient(circle at 78% 62%, rgba(255,255,255,0.02) 0 2px, transparent 3px),
+      radial-gradient(circle at 44% 88%, rgba(255,255,255,0.02) 0 2px, transparent 3px);
+    background-size: 220px 220px, 340px 340px, 280px 280px;
+    pointer-events:none;
+    mix-blend-mode: overlay;
+    z-index:0;
+  }
+
+  header{
+    position:relative;
+    z-index:2;
+    padding: 72px 48px 24px;
+    text-align:center;
+    color:#f1e8d4;
+  }
+  header h1{
+    font-family: 'Homemade Apple', 'Caveat', 'Bradley Hand', 'Brush Script MT', cursive;
+    font-weight: 400;
+    font-size: clamp(44px, 7vw, 84px);
+    margin: 0 0 8px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.2);
+  }
+  header .sub{
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: clamp(18px, 1.8vw, 26px);
+    color: #cbbd9e;
+    letter-spacing: 0.06em;
+    max-width: 720px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+  header .sub a{
+    color: #e8dcbc;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(232, 220, 188, 0.4);
+    transition: border-color .2s ease, color .2s ease;
+  }
+  header .sub a:hover{
+    color: #f5ead0;
+    border-bottom-color: #f5ead0;
+  }
+  header .sub em{
+    color:#e8dcbc; font-style: italic;
+  }
+  header .sub-detail{
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.78em;
+    color: #b3a584;
+    letter-spacing: 0.04em;
+    max-width: 36ch;
+    line-height: 1.4;
+  }
+  header .sub-tap{
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 0.82em;
+    color: #cbbd9e;
+  }
+  .sub-row{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(20px, 3vw, 48px);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .flank-img{
+    height: clamp(126px, 15.4vw, 210px);
+    width: auto;
+    border-radius: 6px;
+    object-fit: cover;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.08) inset;
+    filter: sepia(0.18) saturate(0.85);
+    flex-shrink: 0;
+  }
+  .flank-img.left{ transform: rotate(-3.5deg); }
+  .flank-img.right{ transform: rotate(3deg); }
+  @media (max-width: 680px){
+    .flank-img{ height: 98px; }
+    .sub-row{ gap: 12px; }
+  }
+
+  .toolbar{
+    position:relative;
+    z-index:2;
+    display:flex; justify-content:center; gap:18px;
+    margin: 18px 0 40px;
+  }
+  .tool-btn{
+    font-family: 'Caveat', 'Bradley Hand', 'Brush Script MT', cursive;
+    font-size: 22px;
+    background: #f1e8d4;
+    color: var(--ink);
+    border: none;
+    padding: 8px 22px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow:
+      0 1px 0 rgba(0,0,0,0.25),
+      0 8px 18px rgba(0,0,0,0.35),
+      inset 0 0 0 1px rgba(60,40,20,0.12);
+    transition: transform .12s ease, box-shadow .12s ease;
+    letter-spacing: 0.02em;
+  }
+  .tool-btn:hover{ transform: translateY(-1px) rotate(-0.4deg); }
+  .tool-btn:active{ transform: translateY(1px); }
+
+  main{
+    position:relative;
+    z-index:2;
+    padding: 0 48px 120px;
+    max-width: 1480px;
+    margin: 0 auto;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 40px 36px;
+  }
+  @media (max-width: 1200px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 940px){  .grid{ grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 680px){  .grid{ grid-template-columns: repeat(2, 1fr); gap: 28px 20px;} main{padding: 0 20px 80px;} }
+
+  .card{
+    position: relative;
+    aspect-ratio: 3 / 4;
+    perspective: 1600px;
+    cursor: pointer;
+    transition: transform .25s ease;
+  }
+  .card:hover{ transform: translateY(-4px) rotate(var(--tilt, 0.3deg)); }
+
+  .card-inner{
+    position: absolute; inset: 0;
+    transform-style: preserve-3d;
+    transition: transform .75s cubic-bezier(.2,.7,.2,1);
+    will-change: transform;
+  }
+  .card.flipped .card-inner{ transform: rotateY(180deg); }
+
+  .card.flipped .card-inner,
+  .focus-card.flipped .card-inner{ transform: rotateY(180deg); }
+
+  .face{
+    position:absolute; inset:0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: rotateY(0deg);
+    background: var(--paper);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.85) inset,
+      0 0 0 2px rgba(60,40,20,0.12) inset,
+      0 2px 2px rgba(0,0,0,0.25),
+      0 14px 22px -6px rgba(0,0,0,0.55),
+      0 30px 50px -20px rgba(0,0,0,0.5);
+    display:flex; flex-direction:column;
+    padding: 18px 18px 36px;
+    transition: opacity .4s ease;
+    z-index: 2;
+  }
+  .face-back{
+    transform: rotateY(180deg);
+    opacity: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .card.flipped .face,
+  .focus-card.flipped .face{ opacity: 0; z-index: 1; pointer-events: none; }
+  .card.flipped .face-back,
+  .focus-card.flipped .face-back{ opacity: 1; z-index: 2; pointer-events: auto; }
+
+  /* Aged paper texture */
+  .face::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse at 20% 15%, rgba(160,120,60,0.14), transparent 55%),
+      radial-gradient(ellipse at 80% 85%, rgba(120,80,40,0.18), transparent 60%),
+      radial-gradient(circle at 92% 8%, rgba(80,50,20,0.22), transparent 22%),
+      radial-gradient(circle at 8% 92%, rgba(80,50,20,0.18), transparent 20%);
+    pointer-events:none;
+    mix-blend-mode: multiply;
+    opacity: 0.9;
+  }
+  /* Paper grain */
+  .face::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      repeating-radial-gradient(circle at 30% 40%, rgba(50,30,10,0.04) 0 1px, transparent 1px 3px),
+      repeating-radial-gradient(circle at 70% 60%, rgba(50,30,10,0.04) 0 1px, transparent 1px 2px),
+      radial-gradient(circle at 15% 30%, rgba(90,60,30,0.06) 0 3px, transparent 4px),
+      radial-gradient(circle at 65% 70%, rgba(90,60,30,0.05) 0 4px, transparent 5px),
+      radial-gradient(circle at 45% 85%, rgba(90,60,30,0.07) 0 2px, transparent 3px);
+    background-size: 180px 180px, 140px 140px, auto, auto, auto;
+    pointer-events:none;
+    mix-blend-mode: multiply;
+    opacity: 0.65;
+  }
+  /* Rough uneven edges via layered radial masks */
+  .face{
+    -webkit-mask-image:
+      radial-gradient(ellipse 120% 120% at 50% 50%, #000 97%, transparent 100%);
+    mask-image:
+      radial-gradient(ellipse 120% 120% at 50% 50%, #000 97%, transparent 100%);
+  }
+
+  /* FRONT */
+  .title{
+    font-family: 'Homemade Apple', 'Caveat', 'Bradley Hand', 'Brush Script MT', cursive;
+    font-weight: 400;
+    color: var(--ink);
+    font-size: clamp(14px, 1.45vw, 22px);
+    line-height: 1.08;
+    letter-spacing: 0.3px;
+    text-align: left;
+    padding: 6px 4px 0;
+    min-height: 22%;
+    word-break: break-word;
+  }
+  .title .tname{
+    display:block;
+  }
+  .image-slot{
+    flex: 1;
+    margin: 10px 6px 4px;
+    border: 1px dashed rgba(30,20,10,0.28);
+    border-radius: 2px;
+    display:flex; align-items:center; justify-content:center;
+    position: relative;
+    background:
+      repeating-linear-gradient(135deg, rgba(60,40,20,0.04) 0 6px, transparent 6px 14px);
+  }
+  .image-slot.has-image{
+    border: none;
+    background: transparent;
+  }
+  .image-slot .slot-img{
+    width: 95%;
+    height: 95%;
+    margin: auto;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+    filter: contrast(1.02);
+    border: 1px solid rgba(255,255,255,0.85);
+    box-shadow: 0 0 0 1px rgba(60,40,20,0.08);
+    background: rgba(255,255,255,0.04);
+  }
+  .image-slot .slot-text{
+    font-family: 'Caveat', 'Bradley Hand', 'Brush Script MT', cursive;
+    font-size: clamp(12px, 1.05vw, 16px);
+    color: rgba(30,20,10,0.55);
+    text-align:center;
+    padding: 8px 10px;
+    line-height: 1.15;
+    font-style: italic;
+  }
+  .image-slot .slot-tag{
+    position:absolute; top:6px; left:8px;
+    font-family: 'Caveat', 'Bradley Hand', 'Brush Script MT', cursive;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(30,20,10,0.38);
+  }
+  .num{
+    position:absolute;
+    bottom: 10px; left: 14px;
+    font-family: 'Caveat', 'Bradley Hand', 'Brush Script MT', cursive;
+    font-size: 16px;
+    color: rgba(30,20,10,0.55);
+    white-space: nowrap;
+  }
+  .sig{
+    position:absolute;
+    bottom: 10px; right: 14px;
+    font-family: 'Homemade Apple', 'Caveat', 'Bradley Hand', cursive;
+    font-size: 12px;
+    color: rgba(30,20,10,0.45);
+    transform: rotate(-4deg);
+  }
+
+  /* BACK */
+  .face-back{
+    padding: 22px 22px 30px;
+    justify-content: center;
+  }
+  .aphorism{
+    font-family: 'Caveat', 'Bradley Hand', 'Brush Script MT', cursive;
+    font-weight: 500;
+    color: var(--ink);
+    font-size: clamp(20px, 2.1vw, 32px);
+    line-height: 1.18;
+    text-align: center;
+    text-wrap: pretty;
+    letter-spacing: 0.2px;
+  }
+
+  /* Focus overlay */
+  .overlay{
+    position:fixed; inset:0;
+    background: rgba(10,6,2,0.82);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100;
+    display:none;
+    align-items:center; justify-content:center;
+    padding: 40px;
+    animation: fade .22s ease both;
+  }
+  .overlay.open{ display:flex; }
+  @keyframes fade { from{opacity:0} to{opacity:1} }
+
+  .focus-card{
+    width: min(560px, 92vw);
+    aspect-ratio: 3 / 4;
+    perspective: 2200px;
+    position: relative;
+  }
+  .focus-card .card-inner{ transition: transform 1s cubic-bezier(.2,.7,.2,1); }
+  .focus-card .face{
+    padding: 32px 32px 40px;
+    border-radius: calc(var(--card-radius) + 1px);
+    box-shadow:
+      0 2px 0 rgba(255,255,255,0.28) inset,
+      0 -1px 0 rgba(0,0,0,0.08) inset,
+      0 4px 4px rgba(0,0,0,0.35),
+      0 40px 60px -10px rgba(0,0,0,0.7),
+      0 80px 100px -30px rgba(0,0,0,0.6);
+  }
+  .focus-card .title{
+    font-size: clamp(28px, 3.4vw, 44px);
+    padding: 10px 8px 0;
+    min-height: 20%;
+  }
+  .focus-card .image-slot{ margin: 18px 12px 10px; }
+  .focus-card .image-slot .slot-text{ font-size: clamp(18px, 1.5vw, 22px); }
+  .focus-card .image-slot .slot-tag{ font-size: 13px; top: 10px; left: 12px; }
+  .focus-card .num{ bottom: 18px; left: 24px; font-size: 22px; }
+  .focus-card .sig{ bottom: 18px; right: 24px; font-size: 15px; }
+  .focus-card .aphorism{ font-size: clamp(34px, 3.6vw, 52px); line-height: 1.2; }
+  .focus-card .face-back{ padding: 40px 44px 56px; }
+
+  .focus-nav{
+    position: fixed;
+    top: 50%; transform: translateY(-50%);
+    background: rgba(241,232,212,0.92);
+    color: var(--ink);
+    border: none;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    font-family: 'Caveat', 'Bradley Hand', cursive;
+    font-size: 30px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    z-index: 102;
+    display:flex; align-items:center; justify-content:center;
+    line-height: 1;
+    padding-bottom: 3px;
+  }
+  .focus-nav.prev{ left: 24px; }
+  .focus-nav.next{ right: 24px; }
+  .focus-nav:hover{ background: #fff; }
+  .focus-close{
+    position: fixed;
+    top: 22px; right: 24px;
+    background: transparent;
+    color: #f1e8d4;
+    border: none;
+    font-family: 'Caveat', 'Bradley Hand', cursive;
+    font-size: 26px;
+    cursor: pointer;
+    z-index: 102;
+    letter-spacing: 0.08em;
+  }
+  .focus-hint{
+    position: fixed;
+    bottom: 30px; left: 0; right: 0;
+    text-align: center;
+    color: #cbbd9e;
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    z-index: 102;
+    pointer-events: none;
+  }
+
+  footer{
+    position:relative; z-index:2;
+    text-align:center;
+    color:#8d7f62;
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 14px;
+    padding: 0 24px 60px;
+    letter-spacing: 0.08em;
+  }
+  footer a{ color:#b8a87f; text-decoration: none; border-bottom: 1px dotted #8d7f62; }
+
+  /* tiny subtle per-card rotations for handmade feel */
+  .card:nth-child(5n+1){ --tilt: -0.6deg; transform: rotate(-0.4deg); }
+  .card:nth-child(5n+2){ --tilt:  0.5deg; transform: rotate(0.3deg); }
+  .card:nth-child(5n+3){ --tilt: -0.3deg; transform: rotate(-0.2deg); }
+  .card:nth-child(5n+4){ --tilt:  0.7deg; transform: rotate(0.5deg); }
+  .card:nth-child(5n+5){ --tilt: -0.5deg; transform: rotate(-0.3deg); }
+
+  /* little ink smudge dot on some cards */
+  .face .smudge{
+    position:absolute;
+    width: 10px; height: 8px;
+    background: radial-gradient(ellipse, rgba(20,15,10,0.55), transparent 70%);
+    border-radius: 50%;
+    pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Charlie Cards</h1>
+  <div class="sub-row">
+    <img class="flank-img left" src="images/charlie-hands-watercolor.jpg" alt="Charlie Munger gesturing" />
+    <p class="sub">Twenty-five human tendencies, after <a href="https://www.stripe.press/poor-charlies-almanack/talk-eleven?progress=0.00%25" target="_blank" rel="noopener">Charlie Munger</a>.<br/><span class="sub-detail">A list of psychology-based tendencies that, while generally useful, often mislead.</span><br/><span class="sub-tap">Tap a card to turn it over.</span></p>
+    <img class="flank-img right" src="images/charlie-reading-watercolor.jpg" alt="Charlie Munger reading on a wall" />
+  </div>
+</header>
+
+<div class="toolbar">
+  <button class="tool-btn" id="shuffleBtn">shuffle the deck</button>
+  <button class="tool-btn" id="resetBtn">restore order</button>
+</div>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div class="overlay" id="overlay" aria-hidden="true">
+  <button class="focus-close" id="focusClose">close ✕</button>
+  <button class="focus-nav prev" id="focusPrev" aria-label="previous">‹</button>
+  <div class="focus-card" id="focusCard">
+    <div class="card-inner">
+      <div class="face" id="focusFront"></div>
+      <div class="face face-back" id="focusBack"></div>
+    </div>
+  </div>
+  <button class="focus-nav next" id="focusNext" aria-label="next">›</button>
+  <p class="focus-hint">click the card to flip  ·  ← → to browse  ·  esc to close</p>
+</div>
+
+<footer>
+  after the 25 standard causes of human misjudgment, poor charlie's almanack, chapter eleven
+</footer>
+
+<script>
+const CARDS = [
+  { n: 1,  name: "Reward- and punishment-superresponse",
+    symbol: "Carrot & stick",
+    image: "images/01-carrot-stick.jpg",
+    aphorism: "A clever fox trains his pups: carrots lure them forward, sticks drive them back — rewards and punishments shape all paths." },
+  { n: 2,  name: "Liking / loving",
+    symbol: "Rose with thorns",
+    image: "images/02-rose-thorns.jpeg",
+    aphorism: "The besotted villager overlooks his beloved's thorns, seeing only roses in her garden of flaws." },
+  { n: 3,  name: "Disliking / hating",
+    symbol: "Hemlock next to an apple",
+    image: "images/03-hemlock-apple.jpeg",
+    aphorism: "A feuding neighbor spies poison in every apple from the hated orchard, ignoring the sweet fruit within." },
+  { n: 4,  name: "Doubt-avoidance",
+    symbol: "Fork in the road, chosen without pause",
+    image: "images/04-fork-road.jpeg",
+    aphorism: "The lost traveler picks the first fork in the road, preferring swift certainty over the fog of indecision." },
+  { n: 5,  name: "Inconsistency-avoidance",
+    symbol: "Ship sailing straight into a storm",
+    image: "images/05-ship-storm.jpeg",
+    aphorism: "Once the captain charts his course, he sails stubbornly on, blind to storms that demand a turn." },
+  { n: 6,  name: "Curiosity",
+    symbol: "Puppy sniffing & peeking",
+    image: "images/06-puppy-sniffing.jpg",
+    aphorism: "A wide-eyed puppy peeks into every nook, unraveling mysteries that the complacent adult leaves untouched." },
+  { n: 7,  name: "Kantian fairness",
+    symbol: "Balanced scale of bread",
+    image: "images/07-balanced-scale.jpg",
+    aphorism: "In the village square, the baker weighs every loaf equally, knowing unbalanced scales sour the whole market." },
+  { n: 8,  name: "Envy / jealousy",
+    symbol: "Evil eye over a feast",
+    image: "images/08-evil-eye.jpg",
+    aphorism: "The pauper glares at the king's feast, his own bread turning to ash in the fire of another's fortune." },
+  { n: 9,  name: "Reciprocation",
+    symbol: "Two hands in a handshake",
+    image: "images/09-handshake.jpg",
+    aphorism: "A shared crust sparks a lifelong bond; a stolen bite ignites a vendetta that echoes through generations." },
+  { n: 10, name: "Influence-from-mere-association",
+    symbol: "Shiny coin passing hands",
+    image: "images/10-shiny-coin.jpeg",
+    aphorism: "The shiny coin from a thief's pocket taints the honest merchant who unwittingly accepts it." },
+  { n: 11, name: "Simple, pain-avoiding psychological denial",
+    symbol: "Ostrich, head in the sand",
+    image: "images/11-ostrich.jpg",
+    aphorism: "The gambler erases his mounting debts from mind, whistling past the graveyard of empty pockets." },
+  { n: 12, name: "Excessive self-regard",
+    symbol: "Puffed-up frog at the pond",
+    image: "images/12-puffed-frog.jpeg",
+    aphorism: "In the mirror of ego, the frog puffs up to bull size, croaking superiority over the pond's lesser leaps." },
+  { n: 13, name: "Overoptimism",
+    symbol: "Seed sown in barren soil",
+    image: "images/13-overoptimism-watercolor.jpeg",
+    aphorism: "The dreamer plants seeds in barren soil, envisioning orchards where wiser eyes see only dust." },
+  { n: 14, name: "Deprival-superreaction",
+    symbol: "Clenched fist around crumpled money",
+    image: "images/14-clenched-fist.jpeg",
+    aphorism: "Snatch a crumb from the beggar's bowl, and watch him rage as if his kingdom were stolen." },
+  { n: 15, name: "Social-proof",
+    symbol: "Lemmings leaping off a cliff",
+    image: "images/15-lemmings-cliff.jpeg",
+    aphorism: "One lemming leaps the cliff; the pack follows blindly, mistaking the plunge for a proven path." },
+  { n: 16, name: "Contrast-misreaction",
+    symbol: "Three circles — tiny, medium, huge",
+    image: "images/16-contrast-circles.jpg",
+    aphorism: "Beside a mountain, the hill shrinks to a molehill; judgments twist in the shadow of comparison." },
+  { n: 17, name: "Stress-influence",
+    symbol: "Thunderstorm over a small boat",
+    image: "images/17-storm-lightning.jpeg",
+    aphorism: "Under the storm's lash, the sailor's steady hand trembles, steering folly where calm would guide true." },
+  { n: 18, name: "Availability-misweighing",
+    symbol: "Shark tail breaking the surface",
+    image: "images/18-shark-fin.jpeg",
+    aphorism: "The vivid shark tale drowns out quiet statistics, making every swim feel like jaws await." },
+  { n: 19, name: "Use-it-or-lose-it",
+    symbol: "Rusty sword in an empty forge",
+    image: "images/19-rusty-sword.jpg",
+    aphorism: "The blacksmith's hammer rusts idle; forgotten skills fade like echoes in an empty forge." },
+  { n: 20, name: "Drug-misinfluence",
+    symbol: "Vial of a wavering potion",
+    image: "images/20-drug-syringe-pills.jpg",
+    aphorism: "A sip of potion warps the sage's vision, turning clear truths into hallucinatory mirages." },
+  { n: 21, name: "Senescence-misinfluence",
+    symbol: "Hourglass slowly emptying",
+    image: "images/21-hourglass.png",
+    aphorism: "Time's slow thief dulls the elder's blade, once-sharp wits now blunted by the years' quiet creep." },
+  { n: 22, name: "Authority-misinfluence",
+    symbol: "Suit and tie at a podium",
+    image: "images/22-suit-red-tie.jpg",
+    aphorism: "The emperor declares the sky green; loyal subjects nod, forsaking their own eyes for his word." },
+  { n: 23, name: "Twaddle",
+    symbol: "Twiddling thumbs, empty chatter",
+    image: "images/23-twaddle-wineglass.jpeg",
+    aphorism: "In idle gatherings, nonsense bubbles like froth, filling silence with empty words and witless chatter." },
+  { n: 24, name: "Reason-respecting",
+    symbol: "Tangled string of 'becauses'",
+    image: "images/24-pepe-silvia-board.jpg",
+    aphorism: "Supply a flimsy excuse, and the mind clings to it, preferring any rationale over naked impulse." },
+  { n: 25, name: "Lollapalooza",
+    symbol: "Tangled vines compounding",
+    image: "images/25-lollapalooza-scorpion.jpg",
+    aphorism: "Biases entwine like vines in a jungle; together they ensnare, amplifying folly into catastrophe." },
+];
+
+const pad = (n)=> String(n).padStart(2,'0');
+
+function frontHTML(c){
+  const slotInner = c.image
+    ? `<img class="slot-img" src="${c.image}" alt="${c.symbol}" />`
+    : `<span class="slot-tag">watercolor</span><span class="slot-text">${c.symbol}</span>`;
+  return `
+    <div class="title"><span class="tname">${c.name}</span></div>
+    <div class="image-slot${c.image ? ' has-image' : ''}">
+      ${slotInner}
+    </div>
+    <span class="num">${pad(c.n)} / 25</span>
+    <span class="sig">ky</span>
+    <span class="smudge" style="top:${10+((c.n*13)%70)}%; right:${6+((c.n*7)%10)}%;"></span>
+  `;
+}
+function backHTML(c){
+  return `
+    <div class="aphorism">${c.aphorism}</div>
+    <span class="num">${pad(c.n)} / 25</span>
+  `;
+}
+
+const grid = document.getElementById('grid');
+let order = CARDS.map((_,i)=>i);
+
+function renderGrid(){
+  grid.innerHTML = '';
+  order.forEach((idx)=>{
+    const c = CARDS[idx];
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.dataset.idx = idx;
+    el.innerHTML = `
+      <div class="card-inner">
+        <div class="face">${frontHTML(c)}</div>
+        <div class="face face-back">${backHTML(c)}</div>
+      </div>
+    `;
+    el.addEventListener('click', ()=> openFocus(idx));
+    grid.appendChild(el);
+  });
+}
+
+// Focus overlay
+const overlay = document.getElementById('overlay');
+const focusCard = document.getElementById('focusCard');
+const focusFront = document.getElementById('focusFront');
+const focusBack = document.getElementById('focusBack');
+const focusClose = document.getElementById('focusClose');
+const focusPrev = document.getElementById('focusPrev');
+const focusNext = document.getElementById('focusNext');
+
+let currentPos = 0; // position within `order`
+
+function openFocus(cardIdx){
+  currentPos = order.indexOf(cardIdx);
+  renderFocus();
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden','false');
+}
+function closeFocus(){
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden','true');
+  focusCard.classList.remove('flipped');
+}
+function renderFocus(){
+  const c = CARDS[order[currentPos]];
+  focusFront.innerHTML = frontHTML(c);
+  focusBack.innerHTML = backHTML(c);
+  focusCard.classList.remove('flipped');
+}
+focusCard.addEventListener('click', ()=>{
+  focusCard.classList.toggle('flipped');
+});
+focusClose.addEventListener('click', closeFocus);
+overlay.addEventListener('click', (e)=>{
+  if (e.target === overlay) closeFocus();
+});
+focusPrev.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  currentPos = (currentPos - 1 + order.length) % order.length;
+  renderFocus();
+});
+focusNext.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  currentPos = (currentPos + 1) % order.length;
+  renderFocus();
+});
+
+document.addEventListener('keydown', (e)=>{
+  if (!overlay.classList.contains('open')) return;
+  if (e.key === 'Escape') closeFocus();
+  if (e.key === 'ArrowLeft')  { currentPos = (currentPos - 1 + order.length) % order.length; renderFocus(); }
+  if (e.key === 'ArrowRight') { currentPos = (currentPos + 1) % order.length; renderFocus(); }
+  if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); focusCard.classList.toggle('flipped'); }
+});
+
+// Shuffle + reset
+document.getElementById('shuffleBtn').addEventListener('click', ()=>{
+  for (let i = order.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  renderGrid();
+});
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  order = CARDS.map((_,i)=>i);
+  renderGrid();
+});
+
+renderGrid();
+</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+
+<div id="tweaks-root"></div>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "cardRadius": 10
+}/*EDITMODE-END*/;
+
+function TweaksApp(){
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  React.useEffect(()=>{
+    document.documentElement.style.setProperty('--card-radius', t.cardRadius + 'px');
+  }, [t.cardRadius]);
+  return (
+    <TweaksPanel>
+      <TweakSection label="Cards" />
+      <TweakSlider label="Corner radius" value={t.cardRadius} min={0} max={36} step={1} unit="px"
+                   onChange={(v)=> setTweak('cardRadius', v)} />
+    </TweaksPanel>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('tweaks-root')).render(<TweaksApp />);
+</script>
+
+</body>
+</html>
